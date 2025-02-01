@@ -1,48 +1,54 @@
 import boto3
-import json
+import logging
+from typing import Dict, List
+
+logging.basicConfig(level=logging.INFO)
 
 
-def fetch_iam_data(profile_name=None, region_name=None):
-    """
-    Fetch a minimal set of IAM data from AWS:
-    - Users
-    - Roles
-    Returns a dictionary with keys "Users" and "Roles".
-    """
+class IAMFetcher:
+    def __init__(self, aws_profile: str = None):
+        """Initialize IAMFetcher with optional AWS profile."""
+        session = boto3.Session(profile_name=aws_profile) if aws_profile else boto3.Session()
+        self.iam_client = session.client("iam")
 
-    session_args = {}
-    if profile_name:
-        session_args["profile_name"] = profile_name
-    if region_name:
-        session_args["region_name"] = region_name
+    def get_users(self) -> List[Dict]:
+        """Retrieve all IAM users."""
+        users = []
+        paginator = self.iam_client.get_paginator("list_users")
+        for page in paginator.paginate():
+            users.extend(page["Users"])
+        return users
 
-    # Create a session, then an IAM client
-    session = boto3.Session(**session_args)
-    iam_client = session.client("iam")
+    def get_roles(self) -> List[Dict]:
+        """Retrieve all IAM roles."""
+        roles = []
+        paginator = self.iam_client.get_paginator("list_roles")
+        for page in paginator.paginate():
+            roles.extend(page["Roles"])
+        return roles
 
-    # Fetch all IAM users (paginated)
-    users_response = []
-    paginator = iam_client.get_paginator("list_users")
-    for page in paginator.paginate():
-        users_response.extend(page.get("Users", []))
+    def get_groups(self) -> List[Dict]:
+        """Retrieve all IAM groups."""
+        groups = []
+        paginator = self.iam_client.get_paginator("list_groups")
+        for page in paginator.paginate():
+            groups.extend(page["Groups"])
+        return groups
 
-    # Fetch all IAM roles (paginated)
-    roles_response = []
-    paginator = iam_client.get_paginator("list_roles")
-    for page in paginator.paginate():
-        roles_response.extend(page.get("Roles", []))
+    def get_policies(self) -> List[Dict]:
+        """Retrieve all IAM policies."""
+        policies = []
+        paginator = self.iam_client.get_paginator("list_policies")
+        for page in paginator.paginate(Scope="All"):
+            policies.extend(page["Policies"])
+        return policies
 
-    data = {
-        "Users": users_response,
-        "Roles": roles_response,
-    }
-    return data
-
-
-def save_iam_data_to_json(data, output_path="iam_data.json"):
-    """
-    Save the fetched IAM data as a JSON file.
-    """
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, default=str)
-        print(f"IAM data saved to {output_path}")
+    def fetch_all(self) -> Dict[str, List[Dict]]:
+        """Fetch all IAM data and return as a dictionary."""
+        logging.info("Fetching IAM users, roles, groups, and policies...")
+        return {
+            "users": self.get_users(),
+            "roles": self.get_roles(),
+            "groups": self.get_groups(),
+            "policies": self.get_policies(),
+        }

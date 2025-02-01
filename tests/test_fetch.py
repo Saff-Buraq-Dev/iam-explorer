@@ -1,76 +1,47 @@
-# tests/test_fetch.py
-
-import json
+import unittest
+from moto import mock_iam
 import boto3
-from moto import mock_aws
-
-from iam_explorer.fetch import fetch_iam_data, save_iam_data_to_json
+from iam_explorer.fetch import IAMFetcher
 
 
-@mock_aws
-def test_fetch_iam_data():
-    """
-    Verify fetch_iam_data() returns Users and Roles,
-    using moto's mock_aws to simulate IAM service.
-    """
-    iam_client = boto3.client("iam", region_name="us-east-1")
+@mock_iam
+class TestIAMFetcher(unittest.TestCase):
+    def setUp(self):
+        """Set up IAMFetcher with mocked AWS session."""
+        self.fetcher = IAMFetcher()
 
-    # Create a test user
-    iam_client.create_user(UserName="TestUser")
+        # Create mock users, roles, and policies in IAM
+        self.iam_client = boto3.client("iam")
+        self.iam_client.create_user(UserName="Alice")
+        self.iam_client.create_user(UserName="Bob")
+        self.iam_client.create_role(RoleName="LambdaExecution", AssumeRolePolicyDocument="{}")
+        self.iam_client.create_policy(PolicyName="ReadOnlyAccess", PolicyDocument="{}")
 
-    # Create a test role
-    assume_role_policy_doc = """{
-        "Version":"2012-10-17",
-        "Statement":[
-            {
-                "Effect":"Allow",
-                "Principal":{"Service":"ec2.amazonaws.com"},
-                "Action":"sts:AssumeRole"
-            }
-        ]
-    }"""
-    iam_client.create_role(
-        RoleName="TestRole",
-        AssumeRolePolicyDocument=assume_role_policy_doc
-    )
+    def test_get_users(self):
+        """Test fetching IAM users with Moto."""
+        users = self.fetcher.get_users()
+        usernames = {user["UserName"] for user in users}
+        self.assertEqual(usernames, {"Alice", "Bob"})
 
-    # Now call our fetch function
-    data = fetch_iam_data(profile_name=None, region_name="us-east-1")
+    def test_get_roles(self):
+        """Test fetching IAM roles with Moto."""
+        roles = self.fetcher.get_roles()
+        role_names = {role["RoleName"] for role in roles}
+        self.assertIn("LambdaExecution", role_names)
 
-    # Check that "Users" and "Roles" keys exist
-    assert "Users" in data, "Expected 'Users' key in returned data"
-    assert "Roles" in data, "Expected 'Roles' key in returned data"
+    def test_get_policies(self):
+        """Test fetching IAM policies with Moto."""
+        policies = self.fetcher.get_policies()
+        policy_names = {policy["PolicyName"] for policy in policies}
+        self.assertIn("ReadOnlyAccess", policy_names)
 
-    # Validate that our test user is in the fetched data
-    usernames = [user["UserName"] for user in data["Users"]]
-    assert "TestUser" in usernames, "TestUser should be in the fetched Users list"
-
-    # Validate that our test role is in the fetched data
-    rolenames = [role["RoleName"] for role in data["Roles"]]
-    assert "TestRole" in rolenames, "TestRole should be in the fetched Roles list"
+    def test_fetch_all(self):
+        """Test fetching all IAM data."""
+        iam_data = self.fetcher.fetch_all()
+        self.assertEqual(len(iam_data["users"]), 2)
+        self.assertEqual(len(iam_data["roles"]), 1)
+        self.assertEqual(len(iam_data["policies"]), 1)
 
 
-@mock_aws
-def test_save_iam_data_to_json(tmp_path):
-    """
-    Verify save_iam_data_to_json() properly writes the IAM data to a JSON file.
-    """
-    sample_data = {
-        "Users": [{"UserName": "SampleUser"}],
-        "Roles": [{"RoleName": "SampleRole"}],
-    }
-
-    output_file = tmp_path / "iam_data.json"
-
-    # Use the save function
-    save_iam_data_to_json(sample_data, output_path=str(output_file))
-
-    # Read back the file to confirm it was written correctly
-    with open(output_file, "r", encoding="utf-8") as f:
-        loaded_data = json.load(f)
-
-    # Validate the written contents
-    assert "Users" in loaded_data, "Expected 'Users' key in saved data"
-    assert "Roles" in loaded_data, "Expected 'Roles' key in saved data"
-    assert loaded_data["Users"][0]["UserName"] == "SampleUser"
-    assert loaded_data["Roles"][0]["RoleName"] == "SampleRole"
+if __name__ == "__main__":
+    unittest.main()
