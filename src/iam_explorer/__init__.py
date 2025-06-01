@@ -14,7 +14,7 @@ from .visualizer import GraphVisualizer
 
 __all__ = [
     "IAMUser",
-    "IAMRole", 
+    "IAMRole",
     "IAMGroup",
     "IAMPolicy",
     "IAMGraph",

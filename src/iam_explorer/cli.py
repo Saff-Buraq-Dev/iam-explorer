@@ -66,7 +66,7 @@ def fetch(profile: Optional[str], region: str, output: str, include_aws_managed:
 
         fetcher.save_data(data, output)
 
-        click.echo(f"✅ Successfully fetched IAM data:")
+        click.echo("✅ Successfully fetched IAM data:")
         click.echo(f"   - Users: {len(data['users'])}")
         click.echo(f"   - Roles: {len(data['roles'])}")
         click.echo(f"   - Groups: {len(data['groups'])}")
@@ -100,7 +100,7 @@ def build_graph(input: str, output: str):
         graph = builder.build_from_file(input)
         builder.save_graph(output)
 
-        click.echo(f"✅ Successfully built IAM graph:")
+        click.echo("✅ Successfully built IAM graph:")
         click.echo(f"   - Nodes: {len(graph.graph.nodes)}")
         click.echo(f"   - Edges: {len(graph.graph.edges)}")
         click.echo(f"   - Saved to: {output}")
@@ -234,7 +234,7 @@ def visualize(graph: str, output: str, format: str, include_policies: bool, filt
 
         # Display stats
         stats = visualizer.get_graph_stats()
-        click.echo(f"✅ Visualization generated:")
+        click.echo("✅ Visualization generated:")
         click.echo(f"   - Nodes: {stats['total_nodes']}")
         click.echo(f"   - Edges: {stats['total_edges']}")
         click.echo(f"   - Output: {output}")

@@ -9,7 +9,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .models import IAMUser, IAMRole, IAMGroup, IAMPolicy
+# Models imported for type hints but not used directly in this module
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +188,10 @@ class IAMFetcher:
             "user_id": user_data['UserId'],
             "path": user_data['Path'],
             "create_date": user_data['CreateDate'].isoformat(),
-            "password_last_used": user_data.get('PasswordLastUsed', {}).isoformat() if user_data.get('PasswordLastUsed') else None,
+            "password_last_used": (
+                user_data.get('PasswordLastUsed', {}).isoformat()
+                if user_data.get('PasswordLastUsed') else None
+            ),
             "attached_policies": attached_policies,
             "inline_policies": inline_policies,
             "groups": groups,

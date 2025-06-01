@@ -32,15 +32,35 @@ pip install iam-explorer
 
 ### 1. Installation
 
+#### From PyPI (Recommended)
 ```bash
-# Install from source
+# Basic installation
+pip install iam-explorer
+
+# With visualization support (includes pygraphviz for advanced graph layouts)
+pip install iam-explorer[visualization]
+
+# Development installation with all dependencies
+pip install iam-explorer[dev]
+
+# All features
+pip install iam-explorer[all]
+```
+
+#### From Source
+```bash
 git clone https://github.com/Saff-Buraq-Dev/iam-explorer.git
 cd iam-explorer
-pip install -e .
+pip install -e .[all]
 
 # Verify installation
 iam-explorer --help
 ```
+
+**Note**: The `visualization` extra requires system dependencies on some platforms:
+- **Ubuntu/Debian**: `sudo apt-get install graphviz graphviz-dev pkg-config`
+- **macOS**: `brew install graphviz pkg-config`
+- **Windows**: Install Graphviz from the official website
 
 ### 2. Basic Workflow
 

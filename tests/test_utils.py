@@ -7,11 +7,21 @@ from datetime import datetime
 import requests
 
 from iam_explorer.utils import (
-    parse_arn, extract_account_id, normalize_action,
-    expand_action_wildcards, fetch_aws_service_actions, _get_fallback_service_actions,
-    format_datetime, truncate_string, sanitize_filename, deep_merge_dicts,
-    extract_policy_conditions, evaluate_condition, get_resource_type_from_arn,
-    is_cross_account_access, calculate_permission_risk_score
+    parse_arn,
+    extract_account_id,
+    normalize_action,
+    expand_action_wildcards,
+    fetch_aws_service_actions,
+    _get_fallback_service_actions,
+    format_datetime,
+    truncate_string,
+    sanitize_filename,
+    deep_merge_dicts,
+    extract_policy_conditions,
+    evaluate_condition,
+    get_resource_type_from_arn,
+    is_cross_account_access,
+    calculate_permission_risk_score,
 )
 
 
@@ -23,29 +33,29 @@ class TestUtilityFunctions:
         arn = "arn:aws:iam::123456789012:user/alice"
         parsed = parse_arn(arn)
 
-        assert parsed['partition'] == 'aws'
-        assert parsed['service'] == 'iam'
-        assert parsed['region'] == ''
-        assert parsed['account'] == '123456789012'
-        assert parsed['resource'] == 'user/alice'
+        assert parsed["partition"] == "aws"
+        assert parsed["service"] == "iam"
+        assert parsed["region"] == ""
+        assert parsed["account"] == "123456789012"
+        assert parsed["resource"] == "user/alice"
 
     def test_parse_arn_with_region(self):
         """Test parsing ARN with region."""
         arn = "arn:aws:s3:us-east-1:123456789012:bucket/my-bucket"
         parsed = parse_arn(arn)
 
-        assert parsed['partition'] == 'aws'
-        assert parsed['service'] == 's3'
-        assert parsed['region'] == 'us-east-1'
-        assert parsed['account'] == '123456789012'
-        assert parsed['resource'] == 'bucket/my-bucket'
+        assert parsed["partition"] == "aws"
+        assert parsed["service"] == "s3"
+        assert parsed["region"] == "us-east-1"
+        assert parsed["account"] == "123456789012"
+        assert parsed["resource"] == "bucket/my-bucket"
 
     def test_parse_arn_invalid(self):
         """Test parsing invalid ARN."""
         invalid_arn = "not-an-arn"
         parsed = parse_arn(invalid_arn)
 
-        assert all(value == '' for value in parsed.values())
+        assert all(value == "" for value in parsed.values())
 
     def test_extract_account_id_from_arn(self):
         """Test extracting account ID from ARN."""
@@ -121,11 +131,7 @@ class TestUtilityFunctions:
         statement = {
             "Effect": "Allow",
             "Action": "s3:GetObject",
-            "Condition": {
-                "StringEquals": {
-                    "aws:userid": "AIDACKCEVSQ6C2EXAMPLE"
-                }
-            }
+            "Condition": {"StringEquals": {"aws:userid": "AIDACKCEVSQ6C2EXAMPLE"}},
         }
 
         conditions = extract_policy_conditions(statement)
@@ -134,52 +140,31 @@ class TestUtilityFunctions:
 
     def test_extract_policy_conditions_no_condition(self):
         """Test extracting conditions from statement without conditions."""
-        statement = {
-            "Effect": "Allow",
-            "Action": "s3:GetObject"
-        }
+        statement = {"Effect": "Allow", "Action": "s3:GetObject"}
 
         conditions = extract_policy_conditions(statement)
         assert conditions == {}
 
     def test_evaluate_condition_string_equals_true(self):
         """Test condition evaluation with StringEquals (true case)."""
-        condition = {
-            "StringEquals": {
-                "aws:userid": "AIDACKCEVSQ6C2EXAMPLE"
-            }
-        }
-        context = {
-            "aws:userid": "AIDACKCEVSQ6C2EXAMPLE"
-        }
+        condition = {"StringEquals": {"aws:userid": "AIDACKCEVSQ6C2EXAMPLE"}}
+        context = {"aws:userid": "AIDACKCEVSQ6C2EXAMPLE"}
 
         result = evaluate_condition(condition, context)
         assert result is True
 
     def test_evaluate_condition_string_equals_false(self):
         """Test condition evaluation with StringEquals (false case)."""
-        condition = {
-            "StringEquals": {
-                "aws:userid": "AIDACKCEVSQ6C2EXAMPLE"
-            }
-        }
-        context = {
-            "aws:userid": "DIFFERENT_USER_ID"
-        }
+        condition = {"StringEquals": {"aws:userid": "AIDACKCEVSQ6C2EXAMPLE"}}
+        context = {"aws:userid": "DIFFERENT_USER_ID"}
 
         result = evaluate_condition(condition, context)
         assert result is False
 
     def test_evaluate_condition_string_like_true(self):
         """Test condition evaluation with StringLike (true case)."""
-        condition = {
-            "StringLike": {
-                "s3:prefix": "documents/*"
-            }
-        }
-        context = {
-            "s3:prefix": "documents/file.txt"
-        }
+        condition = {"StringLike": {"s3:prefix": "documents/*"}}
+        context = {"s3:prefix": "documents/file.txt"}
 
         result = evaluate_condition(condition, context)
         assert result is True
@@ -207,7 +192,7 @@ class TestUtilityFunctions:
         resource_arn = "arn:aws:s3:::bucket-in-222222222222"
 
         # Mock extract_account_id to return different account IDs
-        with patch('iam_explorer.utils.extract_account_id') as mock_extract:
+        with patch("iam_explorer.utils.extract_account_id") as mock_extract:
             mock_extract.side_effect = ["111111111111", "222222222222"]
             result = is_cross_account_access(principal_arn, resource_arn)
             assert result is True
@@ -218,7 +203,7 @@ class TestUtilityFunctions:
         resource_arn = "arn:aws:s3:::bucket-in-123456789012"
 
         # Mock extract_account_id to return same account ID
-        with patch('iam_explorer.utils.extract_account_id') as mock_extract:
+        with patch("iam_explorer.utils.extract_account_id") as mock_extract:
             mock_extract.side_effect = ["123456789012", "123456789012"]
             result = is_cross_account_access(principal_arn, resource_arn)
             assert result is False
@@ -246,18 +231,18 @@ class TestUtilityFunctions:
         actions = _get_fallback_service_actions()
 
         assert isinstance(actions, dict)
-        assert 's3' in actions
-        assert 'ec2' in actions
-        assert 'iam' in actions
-        assert isinstance(actions['s3'], list)
-        assert len(actions['s3']) > 0
+        assert "s3" in actions
+        assert "ec2" in actions
+        assert "iam" in actions
+        assert isinstance(actions["s3"], list)
+        assert len(actions["s3"]) > 0
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_fetch_aws_service_actions_success(self, mock_get):
         """Test successful AWS service actions fetching."""
         # Mock response with valid JavaScript content
         mock_response = Mock()
-        mock_response.text = '''
+        mock_response.text = """
         app.PolicyEditorConfig = {
             "serviceMap": {
                 "Amazon S3": {
@@ -270,7 +255,7 @@ class TestUtilityFunctions:
                 }
             }
         };
-        '''
+        """
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -280,12 +265,12 @@ class TestUtilityFunctions:
         actions = fetch_aws_service_actions()
 
         assert isinstance(actions, dict)
-        assert 's3' in actions
-        assert 'ec2' in actions
-        assert 'GetObject' in actions['s3']
-        assert 'DescribeInstances' in actions['ec2']
+        assert "s3" in actions
+        assert "ec2" in actions
+        assert "GetObject" in actions["s3"]
+        assert "DescribeInstances" in actions["ec2"]
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_fetch_aws_service_actions_request_error(self, mock_get):
         """Test AWS service actions fetching with request error."""
         mock_get.side_effect = requests.RequestException("Network error")
@@ -297,10 +282,10 @@ class TestUtilityFunctions:
 
         # Should return fallback actions
         assert isinstance(actions, dict)
-        assert 's3' in actions
-        assert 'ec2' in actions
+        assert "s3" in actions
+        assert "ec2" in actions
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_fetch_aws_service_actions_parse_error(self, mock_get):
         """Test AWS service actions fetching with parse error."""
         mock_response = Mock()
@@ -315,7 +300,7 @@ class TestUtilityFunctions:
 
         # Should return fallback actions
         assert isinstance(actions, dict)
-        assert 's3' in actions
+        assert "s3" in actions
 
     def test_expand_action_wildcards_no_wildcard(self):
         """Test action expansion without wildcards."""
@@ -323,56 +308,46 @@ class TestUtilityFunctions:
         expanded = expand_action_wildcards(action)
         assert expanded == ["s3:GetObject"]
 
-    @patch('iam_explorer.utils.fetch_aws_service_actions')
+    @patch("iam_explorer.utils.fetch_aws_service_actions")
     def test_expand_action_wildcards_service_specific(self, mock_fetch):
         """Test service-specific wildcard expansion."""
-        mock_fetch.return_value = {
-            's3': ['GetObject', 'PutObject', 'DeleteObject']
-        }
+        mock_fetch.return_value = {"s3": ["GetObject", "PutObject", "DeleteObject"]}
 
         action = "s3:*"
         expanded = expand_action_wildcards(action)
 
-        expected = ['s3:GetObject', 's3:PutObject', 's3:DeleteObject']
+        expected = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
         assert expanded == expected
 
-    @patch('iam_explorer.utils.fetch_aws_service_actions')
+    @patch("iam_explorer.utils.fetch_aws_service_actions")
     def test_expand_action_wildcards_pattern_matching(self, mock_fetch):
         """Test pattern matching in action expansion."""
-        mock_fetch.return_value = {
-            's3': ['GetObject', 'GetBucketPolicy', 'PutObject', 'ListBucket']
-        }
+        mock_fetch.return_value = {"s3": ["GetObject", "GetBucketPolicy", "PutObject", "ListBucket"]}
 
         action = "s3:Get*"
         expanded = expand_action_wildcards(action)
 
-        expected = ['s3:GetObject', 's3:GetBucketPolicy']
+        expected = ["s3:GetObject", "s3:GetBucketPolicy"]
         assert expanded == expected
 
-    @patch('iam_explorer.utils.fetch_aws_service_actions')
+    @patch("iam_explorer.utils.fetch_aws_service_actions")
     def test_expand_action_wildcards_cross_service(self, mock_fetch):
         """Test cross-service wildcard expansion."""
-        mock_fetch.return_value = {
-            's3': ['CreateBucket', 'GetObject'],
-            'ec2': ['CreateInstance', 'DescribeInstances']
-        }
+        mock_fetch.return_value = {"s3": ["CreateBucket", "GetObject"], "ec2": ["CreateInstance", "DescribeInstances"]}
 
         action = "*:Create*"
         expanded = expand_action_wildcards(action)
 
-        expected = ['s3:CreateBucket', 'ec2:CreateInstance']
+        expected = ["s3:CreateBucket", "ec2:CreateInstance"]
         assert expanded == expected
 
-    @patch('iam_explorer.utils.fetch_aws_service_actions')
+    @patch("iam_explorer.utils.fetch_aws_service_actions")
     def test_expand_action_wildcards_all_actions(self, mock_fetch):
         """Test expansion of all actions wildcard."""
-        mock_fetch.return_value = {
-            's3': ['GetObject', 'PutObject'],
-            'ec2': ['DescribeInstances']
-        }
+        mock_fetch.return_value = {"s3": ["GetObject", "PutObject"], "ec2": ["DescribeInstances"]}
 
         action = "*"
         expanded = expand_action_wildcards(action)
 
-        expected = ['s3:GetObject', 's3:PutObject', 'ec2:DescribeInstances']
+        expected = ["s3:GetObject", "s3:PutObject", "ec2:DescribeInstances"]
         assert expanded == expected

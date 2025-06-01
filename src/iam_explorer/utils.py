@@ -6,7 +6,7 @@ import re
 import json
 import requests
 import logging
-from typing import Dict, List, Any, Optional, Set
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 from functools import lru_cache
 
