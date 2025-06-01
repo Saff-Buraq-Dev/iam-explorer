@@ -1,0 +1,6 @@
+// IAM Relationships
+digraph {
+	dpi=300 rankdir=TB size="12,8"
+	node [fontname=Arial shape=box style="rounded,filled"]
+	edge [fontname=Arial fontsize=10]
+}
